@@ -237,6 +237,7 @@ public class ColumnAnalysisResultPage extends AbstractAnalysisResultPage impleme
      *
      * @seejava.beans.PropertyChangeListener#propertyChange(java.beans. PropertyChangeEvent)
      */
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (PluginConstant.ISDIRTY_PROPERTY.equals(evt.getPropertyName())) {
             ((AnalysisEditor) this.getEditor()).firePropertyChange(IEditorPart.PROP_DIRTY);
@@ -292,6 +293,10 @@ public class ColumnAnalysisResultPage extends AbstractAnalysisResultPage impleme
                     DynamicChartEventReceiver eReceiver = AnalysisUtils.createDynamicChartEventReceiver(
                             oneCategoryIndicatorModel, index++, oneIndicator);
                     eReceiver.setChartComposite(chartComposite);
+                    // don't remove - for TDQ-12247 frequence indicator will use the parent chart composite to refresh
+                    // the result
+                    eReceiver.setParentChartComposite((Composite) oneCategoryIndicatorModel.getBawParentChartComp());
+                    // ~don't remove
                     eReceiver.refreshChart();
                     eReceiver.setTableViewer(tableViewer);
 
