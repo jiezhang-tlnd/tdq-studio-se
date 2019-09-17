@@ -1805,6 +1805,12 @@
            name="Update the sql expressions for  Average Length with Blank, Average Length with Blank and Null Text Indicators"
            version="7.3.1">
      </workspacetask>
+     <workspacetask
+           class="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4ReportTask"
+           id="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4ReportTask"
+           name="Upgrade the Password Encryption algorithm for Report Task"
+           version="7.3.1">
+     </workspacetask>
   </extension>
   
   <extension
