@@ -19,6 +19,7 @@ import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.cwm.helper.TaggedValueHelper;
 import org.talend.dataprofiler.core.migration.AbstractWorksapceUpdateTask;
 import org.talend.dataquality.reports.TdReport;
+import org.talend.dq.helper.resourcehelper.PrvResourceFileHelper;
 import org.talend.dq.helper.resourcehelper.RepResourceFileHelper;
 import org.talend.dq.writer.impl.ElementWriterFactory;
 import org.talend.utils.security.PasswordMigrationUtil;
@@ -41,24 +42,32 @@ public class UpgradePasswordEncryptionAlg4DQItemTask extends AbstractWorksapceUp
 
     @Override
     protected boolean doExecute() throws Exception {
+        // for report datamart part, consider the password
         List<? extends ModelElement> allElement = RepResourceFileHelper.getInstance().getAllElement();
         for (ModelElement me : allElement) {
-            // for report datamart part, consider the password
             if (me instanceof TdReport) {
                 TdReport report = (TdReport) me;
                 TaggedValue oldPassword = TaggedValueHelper
                         .getTaggedValue(TaggedValueHelper.REP_DBINFO_PASSWORD, report.getTaggedValue());
-                String newPassword = PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPassword.getValue());
-                TaggedValueHelper.setTaggedValue(report, TaggedValueHelper.REP_DBINFO_PASSWORD, newPassword); // after
-                ElementWriterFactory.getInstance().createReportWriter().save(me);
-            } else if (me instanceof DatabaseConnection) {
-                // for database connection, consider the password
-                DatabaseConnection dbConnection = (DatabaseConnection) me;
-                String pass = dbConnection.getPassword();
-                if (pass != null) {
-                    dbConnection.setPassword(PasswordMigrationUtil.getEncryptPasswordIfNeed(pass));
+                String oldPass = oldPassword.getValue();
+                if (oldPass != null) {
+                    String newPassword = PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPass);
+                    TaggedValueHelper.setTaggedValue(report, TaggedValueHelper.REP_DBINFO_PASSWORD, newPassword); // after
+                    ElementWriterFactory.getInstance().createReportWriter().save(me);
                 }
-                ElementWriterFactory.getInstance().createReportWriter().save(me);
+            }
+        }
+
+        // for database connection, consider the password
+        List<? extends ModelElement> allConnectionElement = PrvResourceFileHelper.getInstance().getAllElement();
+        for (ModelElement me : allConnectionElement) {
+            if (me instanceof DatabaseConnection) {
+                DatabaseConnection dbConnection = (DatabaseConnection) me;
+                String oldPass = dbConnection.getPassword();
+                if (oldPass != null) {
+                    dbConnection.setPassword(PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPass));
+                    ElementWriterFactory.getInstance().createDataProviderWriter().save(me);
+                }
             }
         }
         return true;
