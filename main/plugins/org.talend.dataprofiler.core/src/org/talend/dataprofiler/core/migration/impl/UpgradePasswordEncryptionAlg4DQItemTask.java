@@ -15,6 +15,7 @@ package org.talend.dataprofiler.core.migration.impl;
 import java.util.Date;
 import java.util.List;
 
+import org.talend.core.model.metadata.builder.connection.DatabaseConnection;
 import org.talend.cwm.helper.TaggedValueHelper;
 import org.talend.dataprofiler.core.migration.AbstractWorksapceUpdateTask;
 import org.talend.dataquality.reports.TdReport;
@@ -28,7 +29,7 @@ import orgomg.cwm.objectmodel.core.TaggedValue;
 /**
  * TDQ-16616 msjian: Migration to new encryption/decryption scheme.
  */
-public class UpgradePasswordEncryptionAlg4ReportTask extends AbstractWorksapceUpdateTask {
+public class UpgradePasswordEncryptionAlg4DQItemTask extends AbstractWorksapceUpdateTask {
 
     public Date getOrder() {
         return createDate(2019, 9, 16);
@@ -42,12 +43,21 @@ public class UpgradePasswordEncryptionAlg4ReportTask extends AbstractWorksapceUp
     protected boolean doExecute() throws Exception {
         List<? extends ModelElement> allElement = RepResourceFileHelper.getInstance().getAllElement();
         for (ModelElement me : allElement) {
+            // for report datamart part, consider the password
             if (me instanceof TdReport) {
                 TdReport report = (TdReport) me;
                 TaggedValue oldPassword = TaggedValueHelper
                         .getTaggedValue(TaggedValueHelper.REP_DBINFO_PASSWORD, report.getTaggedValue());
                 String newPassword = PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPassword.getValue());
                 TaggedValueHelper.setTaggedValue(report, TaggedValueHelper.REP_DBINFO_PASSWORD, newPassword); // after
+                ElementWriterFactory.getInstance().createReportWriter().save(me);
+            } else if (me instanceof DatabaseConnection) {
+                // for database connection, consider the password
+                DatabaseConnection dbConnection = (DatabaseConnection) me;
+                String pass = dbConnection.getPassword();
+                if (pass != null) {
+                    dbConnection.setPassword(PasswordMigrationUtil.getEncryptPasswordIfNeed(pass));
+                }
                 ElementWriterFactory.getInstance().createReportWriter().save(me);
             }
         }

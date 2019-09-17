@@ -1806,9 +1806,9 @@
            version="7.3.1">
      </workspacetask>
      <workspacetask
-           class="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4ReportTask"
-           id="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4ReportTask"
-           name="Upgrade the Password Encryption algorithm for Report Task"
+           class="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4DQItemTask"
+           id="org.talend.dataprofiler.core.migration.impl.UpgradePasswordEncryptionAlg4DQItemTask"
+           name="Upgrade the Password Encryption algorithm for DQ Item Task"
            version="7.3.1">
      </workspacetask>
   </extension>
