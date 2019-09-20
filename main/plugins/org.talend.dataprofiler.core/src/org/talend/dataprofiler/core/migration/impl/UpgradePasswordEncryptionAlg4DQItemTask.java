@@ -29,6 +29,7 @@ import org.talend.dataquality.reports.TdReport;
 import org.talend.designer.core.model.utils.emf.talendfile.ContextParameterType;
 import org.talend.designer.core.model.utils.emf.talendfile.ContextType;
 import org.talend.designer.core.model.utils.emf.talendfile.util.TalendFileSwitch;
+import org.talend.dq.helper.ContextHelper;
 import org.talend.dq.helper.PropertyHelper;
 import org.talend.dq.helper.resourcehelper.ContextResourceFileHelper;
 import org.talend.dq.helper.resourcehelper.PrvResourceFileHelper;
@@ -76,13 +77,12 @@ public class UpgradePasswordEncryptionAlg4DQItemTask extends AbstractWorksapceUp
             if (type == null) {
                 continue;
             }
-            // ContextType type = (ContextType) ContextResourceFileHelper.getInstance().getModelElement(contextFile);
             List<ContextParameterType> paramTypes = type.getContextParameter();
             if (paramTypes != null) {
                 for (ContextParameterType param : paramTypes) {
                     String value = param.getValue();
                     if (value != null && PasswordEncryptUtil.isPasswordType(param.getType())) {
-                        param.setRawValue(PasswordMigrationUtil.getEncryptPasswordIfNeed(value));
+                        param.setRawValue(PasswordMigrationUtil.getDecryptPassword(value));
                         modify = true;
                     }
                 }
@@ -119,13 +119,17 @@ public class UpgradePasswordEncryptionAlg4DQItemTask extends AbstractWorksapceUp
             if (me instanceof TdReport) {
                 boolean modify = false;
                 TdReport report = (TdReport) me;
+
                 TaggedValue oldPassword = TaggedValueHelper
                         .getTaggedValue(TaggedValueHelper.REP_DBINFO_PASSWORD, report.getTaggedValue());
                 String oldPass = oldPassword.getValue();
                 if (oldPass != null) {
-                    String newPassword = PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPass);
-                    TaggedValueHelper.setTaggedValue(report, TaggedValueHelper.REP_DBINFO_PASSWORD, newPassword); // after
-                    modify = true;
+                    // for context mode datamart connection, keep it
+                    if (!ContextHelper.isContextVar(oldPass)) {
+                        String newPassword = PasswordMigrationUtil.getEncryptPasswordIfNeed(oldPass);
+                        TaggedValueHelper.setTaggedValue(report, TaggedValueHelper.REP_DBINFO_PASSWORD, newPassword); // after
+                        modify = true;
+                    }
                 }
 
                 // for report context part, consider the password
@@ -136,7 +140,7 @@ public class UpgradePasswordEncryptionAlg4DQItemTask extends AbstractWorksapceUp
                         for (ContextParameterType param : paramTypes) {
                             String value = param.getValue();
                             if (value != null && PasswordEncryptUtil.isPasswordType(param.getType())) {
-                                param.setRawValue(PasswordMigrationUtil.getEncryptPasswordIfNeed(value));
+                                param.setRawValue(PasswordMigrationUtil.getDecryptPassword(value));
                                 modify = true;
                             }
                         }
